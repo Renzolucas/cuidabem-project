@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Camera, Upload, X, Sparkles, RotateCcw, CheckCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import {
@@ -28,6 +28,15 @@ export function AIPhotoScan({ onResult }: AIPhotoScanProps) {
   const [result, setResult] = useState<MedicineAIResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Limpa a URL temporária da imagem quando o componente fecha ou a foto muda (evita travar o celular)
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   function handleOpen() {
     setStep("start");

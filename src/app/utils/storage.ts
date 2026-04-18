@@ -19,10 +19,15 @@ function schedulesKey() {
 export function getMedicines(): Medicine[] {
   const data = localStorage.getItem(medicinesKey());
   if (!data) return [];
-  return JSON.parse(data).map((m: any) => ({
-    ...m,
-    createdAt: new Date(m.createdAt),
-  }));
+  try {
+    return JSON.parse(data).map((m: any) => ({
+      ...m,
+      createdAt: new Date(m.createdAt),
+    }));
+  } catch (error) {
+    console.error("Erro ao ler medicamentos do storage:", error);
+    return [];
+  }
 }
 
 export function saveMedicine(medicine: Medicine): void {
@@ -60,10 +65,15 @@ export function getMedicineById(id: string): Medicine | undefined {
 export function getSchedules(): Schedule[] {
   const data = localStorage.getItem(schedulesKey());
   if (!data) return [];
-  return JSON.parse(data).map((s: any) => ({
-    ...s,
-    startDate: new Date(s.startDate),
-  }));
+  try {
+    return JSON.parse(data).map((s: any) => ({
+      ...s,
+      startDate: new Date(s.startDate),
+    }));
+  } catch (error) {
+    console.error("Erro ao ler horários do storage:", error);
+    return [];
+  }
 }
 
 export function saveSchedule(schedule: Schedule): void {

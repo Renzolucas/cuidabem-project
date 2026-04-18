@@ -64,21 +64,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signUp(email: string, password: string, name: string) {
     try {
-      const res = await fetch(`${serverUrl}/auth/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${publicAnonKey}`,
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+          },
         },
-        body: JSON.stringify({ email, password, name }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        return { error: data.error || "Erro ao criar conta" };
+
+      if (error) {
+        return { error: error.message };
       }
-      // After signup, sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) return { error: signInError.message };
+
+      // Supabase might require email confirmation depending on project settings.
+      // If the user is returned and there's no session, it might mean confirmation is needed.
+      if (data.user && !data.session) {
+        // However, usually for simple prototypes we want immediate login.
+        // If the project has "Confirm Email" disabled, data.session will be present.
+        // If it's enabled, we'll try to sign in anyway to see if it works.
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) {
+          if (signInError.message.includes("Email not confirmed")) {
+            return { error: "Por favor, confirme seu e-mail para continuar." };
+          }
+          return { error: signInError.message };
+        }
+      }
+
       return { error: null };
     } catch (err) {
       console.error("SignUp error:", err);

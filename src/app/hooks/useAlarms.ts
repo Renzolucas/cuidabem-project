@@ -141,8 +141,8 @@ export function useAlarms() {
     // Check immediately
     checkAlarms();
 
-    // Check every minute
-    const interval = setInterval(checkAlarms, 60000);
+    // Check every 15 seconds to avoid missing the minute due to browser throttling
+    const interval = setInterval(checkAlarms, 15000);
 
     return () => clearInterval(interval);
   }, []);
