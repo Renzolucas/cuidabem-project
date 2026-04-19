@@ -70,9 +70,13 @@ export function Schedules() {
     return () => clearInterval(interval);
   }, []);
 
-  function loadData() {
-    setSchedules(getSchedules());
-    setMedicines(getMedicines());
+  async function loadData() {
+    const [schedulesData, medicinesData] = await Promise.all([
+      getSchedules(),
+      getMedicines(),
+    ]);
+    setSchedules(schedulesData);
+    setMedicines(medicinesData);
   }
 
   function resetForm() {
@@ -101,7 +105,7 @@ export function Schedules() {
     setFormData({ ...formData, times: newTimes });
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!formData.medicineId || formData.times.some((t) => !t)) {
@@ -112,35 +116,39 @@ export function Schedules() {
     const medicine = medicines.find((m) => m.id === formData.medicineId);
     if (!medicine) return;
 
-    if (editingSchedule) {
-      const updatedSchedule: Schedule = {
-        ...editingSchedule,
-        medicineId: formData.medicineId,
-        medicineName: medicine.name,
-        times: formData.times,
-        frequency: formData.frequency,
-        startDate: new Date(formData.startDate),
-        notes: formData.notes,
-      };
-      updateSchedule(updatedSchedule);
-      toast.success("Horário atualizado com sucesso!");
-    } else {
-      const schedule: Schedule = {
-        id: crypto.randomUUID(),
-        medicineId: formData.medicineId,
-        medicineName: medicine.name,
-        times: formData.times,
-        frequency: formData.frequency,
-        startDate: new Date(formData.startDate),
-        notes: formData.notes,
-      };
-      saveSchedule(schedule);
-      toast.success("Horário criado com sucesso!");
-    }
+    try {
+      if (editingSchedule) {
+        const updatedSchedule: Schedule = {
+          ...editingSchedule,
+          medicineId: formData.medicineId,
+          medicineName: medicine.name,
+          times: formData.times,
+          frequency: formData.frequency,
+          startDate: new Date(formData.startDate),
+          notes: formData.notes,
+        };
+        await updateSchedule(updatedSchedule);
+        toast.success("Horário atualizado com sucesso!");
+      } else {
+        const schedule: Schedule = {
+          id: crypto.randomUUID(),
+          medicineId: formData.medicineId,
+          medicineName: medicine.name,
+          times: formData.times,
+          frequency: formData.frequency,
+          startDate: new Date(formData.startDate),
+          notes: formData.notes,
+        };
+        await saveSchedule(schedule);
+        toast.success("Horário criado com sucesso!");
+      }
 
-    loadData();
-    setIsDialogOpen(false);
-    resetForm();
+      await loadData();
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      toast.error("Erro ao salvar o horário.");
+    }
   }
 
   function handleEdit(schedule: Schedule) {
@@ -155,11 +163,15 @@ export function Schedules() {
     setIsDialogOpen(true);
   }
 
-  function handleDelete(id: string) {
-    deleteSchedule(id);
-    loadData();
-    setScheduleToDelete(null);
-    toast.success("Horário excluído com sucesso!");
+  async function handleDelete(id: string) {
+    try {
+      await deleteSchedule(id);
+      await loadData();
+      setScheduleToDelete(null);
+      toast.success("Horário excluído com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao excluir o horário.");
+    }
   }
 
   // Group schedules by day

@@ -1,103 +1,169 @@
 import { Medicine, Schedule } from "../types";
+import { getSupabase } from "../contexts/AuthContext";
 
-// Current user prefix – set once on login
-let _userPrefix = "global";
+// Auxiliar para converter datas vindas do Supabase
+const mapMedicine = (m: any): Medicine => ({
+  ...m,
+  createdAt: new Date(m.created_at || m.createdAt),
+});
 
-export function setStoragePrefix(userId: string) {
-  _userPrefix = userId || "global";
-}
-
-function medicinesKey() {
-  return `cuidaBEM_medicines_${_userPrefix}`;
-}
-
-function schedulesKey() {
-  return `cuidaBEM_schedules_${_userPrefix}`;
-}
+const mapSchedule = (s: any): Schedule => ({
+  ...s,
+  startDate: new Date(s.start_date || s.startDate),
+  times: Array.isArray(s.times) ? s.times : JSON.parse(s.times || "[]"),
+});
 
 // Medicines
-export function getMedicines(): Medicine[] {
-  const data = localStorage.getItem(medicinesKey());
-  if (!data) return [];
-  try {
-    return JSON.parse(data).map((m: any) => ({
-      ...m,
-      createdAt: new Date(m.createdAt),
-    }));
-  } catch (error) {
-    console.error("Erro ao ler medicamentos do storage:", error);
+export async function getMedicines(): Promise<Medicine[]> {
+  const supabase = getSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("medicines")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar medicamentos:", error);
     return [];
   }
+
+  return (data || []).map(mapMedicine);
 }
 
-export function saveMedicine(medicine: Medicine): void {
-  const medicines = getMedicines();
-  medicines.push(medicine);
-  localStorage.setItem(medicinesKey(), JSON.stringify(medicines));
+export async function saveMedicine(medicine: Medicine): Promise<void> {
+  const supabase = getSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase.from("medicines").insert([
+    {
+      id: medicine.id,
+      user_id: user.id,
+      name: medicine.name,
+      dosage: medicine.dosage,
+      type: medicine.type,
+      manufacturer: medicine.manufacturer,
+      description: medicine.description,
+      side_effects: medicine.sideEffects,
+      created_at: medicine.createdAt.toISOString(),
+    },
+  ]);
+
+  if (error) throw error;
 }
 
-export function updateMedicine(medicine: Medicine): void {
-  const medicines = getMedicines();
-  const index = medicines.findIndex((m) => m.id === medicine.id);
-  if (index !== -1) {
-    medicines[index] = medicine;
-    localStorage.setItem(medicinesKey(), JSON.stringify(medicines));
-  }
+export async function updateMedicine(medicine: Medicine): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("medicines")
+    .update({
+      name: medicine.name,
+      dosage: medicine.dosage,
+      type: medicine.type,
+      manufacturer: medicine.manufacturer,
+      description: medicine.description,
+      side_effects: medicine.sideEffects,
+    })
+    .eq("id", medicine.id);
+
+  if (error) throw error;
 }
 
-export function deleteMedicine(id: string): void {
-  const medicines = getMedicines();
-  const filtered = medicines.filter((m) => m.id !== id);
-  localStorage.setItem(medicinesKey(), JSON.stringify(filtered));
-
-  // Also delete related schedules
-  const schedules = getSchedules();
-  const filteredSchedules = schedules.filter((s) => s.medicineId !== id);
-  localStorage.setItem(schedulesKey(), JSON.stringify(filteredSchedules));
+export async function deleteMedicine(id: string): Promise<void> {
+  const supabase = getSupabase();
+  
+  // Exclui horários relacionados primeiro (ou confia no ON DELETE CASCADE se configurado)
+  await supabase.from("schedules").delete().eq("medicine_id", id);
+  
+  const { error } = await supabase.from("medicines").delete().eq("id", id);
+  if (error) throw error;
 }
 
-export function getMedicineById(id: string): Medicine | undefined {
-  const medicines = getMedicines();
-  return medicines.find((m) => m.id === id);
+export async function getMedicineById(id: string): Promise<Medicine | undefined> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("medicines")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return undefined;
+  return mapMedicine(data);
 }
 
 // Schedules
-export function getSchedules(): Schedule[] {
-  const data = localStorage.getItem(schedulesKey());
-  if (!data) return [];
-  try {
-    return JSON.parse(data).map((s: any) => ({
-      ...s,
-      startDate: new Date(s.startDate),
-    }));
-  } catch (error) {
-    console.error("Erro ao ler horários do storage:", error);
+export async function getSchedules(): Promise<Schedule[]> {
+  const supabase = getSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("schedules")
+    .select("*")
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Erro ao buscar horários:", error);
     return [];
   }
+
+  return (data || []).map(mapSchedule);
 }
 
-export function saveSchedule(schedule: Schedule): void {
-  const schedules = getSchedules();
-  schedules.push(schedule);
-  localStorage.setItem(schedulesKey(), JSON.stringify(schedules));
+export async function saveSchedule(schedule: Schedule): Promise<void> {
+  const supabase = getSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase.from("schedules").insert([
+    {
+      id: schedule.id,
+      user_id: user.id,
+      medicine_id: schedule.medicineId,
+      medicine_name: schedule.medicineName,
+      times: schedule.times,
+      frequency: schedule.frequency,
+      start_date: schedule.startDate.toISOString(),
+      notes: schedule.notes,
+    },
+  ]);
+
+  if (error) throw error;
 }
 
-export function updateSchedule(schedule: Schedule): void {
-  const schedules = getSchedules();
-  const index = schedules.findIndex((s) => s.id === schedule.id);
-  if (index !== -1) {
-    schedules[index] = schedule;
-    localStorage.setItem(schedulesKey(), JSON.stringify(schedules));
-  }
+export async function updateSchedule(schedule: Schedule): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("schedules")
+    .update({
+      times: schedule.times,
+      frequency: schedule.frequency,
+      start_date: schedule.startDate.toISOString(),
+      notes: schedule.notes,
+      medicine_id: schedule.medicineId,
+      medicine_name: schedule.medicineName,
+    })
+    .eq("id", schedule.id);
+
+  if (error) throw error;
 }
 
-export function deleteSchedule(id: string): void {
-  const schedules = getSchedules();
-  const filtered = schedules.filter((s) => s.id !== id);
-  localStorage.setItem(schedulesKey(), JSON.stringify(filtered));
+export async function deleteSchedule(id: string): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase.from("schedules").delete().eq("id", id);
+  if (error) throw error;
 }
 
-export function getSchedulesByMedicineId(medicineId: string): Schedule[] {
-  const schedules = getSchedules();
-  return schedules.filter((s) => s.medicineId === medicineId);
+export async function getSchedulesByMedicineId(medicineId: string): Promise<Schedule[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("schedules")
+    .select("*")
+    .eq("medicine_id", medicineId);
+
+  if (error) return [];
+  return (data || []).map(mapSchedule);
 }

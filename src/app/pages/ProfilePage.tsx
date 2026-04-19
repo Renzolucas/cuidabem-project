@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, LogOut, Trash2, Shield, Bell, Pill, Clock, ChevronRight } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -20,9 +20,20 @@ export function ProfilePage() {
   const { user, signOut } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [medicinesCount, setMedicinesCount] = useState(0);
+  const [schedulesCount, setSchedulesCount] = useState(0);
 
-  const medicines = getMedicines();
-  const schedules = getSchedules();
+  useEffect(() => {
+    async function loadStats() {
+      const [medicines, schedules] = await Promise.all([
+        getMedicines(),
+        getSchedules(),
+      ]);
+      setMedicinesCount(medicines.length);
+      setSchedulesCount(schedules.length);
+    }
+    loadStats();
+  }, []);
 
   const displayName =
     user?.user_metadata?.name ||
@@ -107,9 +118,9 @@ export function ProfilePage() {
           <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center mx-auto mb-3">
             <Pill className="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
-          <p className="text-3xl font-bold text-green-700 dark:text-green-400">{medicines.length}</p>
+          <p className="text-3xl font-bold text-green-700 dark:text-green-400">{medicinesCount}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {medicines.length === 1 ? "Remédio cadastrado" : "Remédios cadastrados"}
+            {medicinesCount === 1 ? "Remédio cadastrado" : "Remédios cadastrados"}
           </p>
         </Card>
 
@@ -117,9 +128,9 @@ export function ProfilePage() {
           <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center mx-auto mb-3">
             <Clock className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">{schedules.length}</p>
+          <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">{schedulesCount}</p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {schedules.length === 1 ? "Horário configurado" : "Horários configurados"}
+            {schedulesCount === 1 ? "Horário configurado" : "Horários configurados"}
           </p>
         </Card>
       </div>

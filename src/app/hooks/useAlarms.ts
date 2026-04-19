@@ -75,12 +75,12 @@ export function useAlarms() {
 
   // Check alarms every minute
   useEffect(() => {
-    const checkAlarms = () => {
+    const checkAlarms = async () => {
       const now = new Date();
       const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       const currentDate = now.toDateString();
 
-      const schedules = getSchedules();
+      const schedules = await getSchedules();
 
       schedules.forEach((schedule) => {
         schedule.times.forEach((time) => {

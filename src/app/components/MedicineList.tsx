@@ -27,15 +27,20 @@ export function MedicineList() {
     loadMedicines();
   }, []);
 
-  function loadMedicines() {
-    setMedicines(getMedicines());
+  async function loadMedicines() {
+    const data = await getMedicines();
+    setMedicines(data);
   }
 
-  function handleDelete(id: string) {
-    deleteMedicine(id);
-    loadMedicines();
-    setMedicineToDelete(null);
-    toast.success("Remédio excluído com sucesso!");
+  async function handleDelete(id: string) {
+    try {
+      await deleteMedicine(id);
+      await loadMedicines();
+      setMedicineToDelete(null);
+      toast.success("Remédio excluído com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao excluir o remédio.");
+    }
   }
 
   const filteredMedicines = medicines.filter((med) =>

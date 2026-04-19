@@ -3,18 +3,10 @@ import { router } from "./routes";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { LoginPage } from "./pages/LoginPage";
-import { setStoragePrefix } from "./utils/storage";
 import { useEffect } from "react";
 
 function AppContent() {
   const { user, loading } = useAuth();
-
-  // Set storage prefix whenever user changes
-  useEffect(() => {
-    if (user?.id) {
-      setStoragePrefix(user.id);
-    }
-  }, [user?.id]);
 
   if (loading) {
     return (

@@ -13,14 +13,17 @@ export function MedicineDetails() {
   const [medicine, setMedicine] = useState<Medicine | null>(null);
 
   useEffect(() => {
-    if (id) {
-      const med = getMedicineById(id);
-      if (med) {
-        setMedicine(med);
-      } else {
-        navigate("/");
+    async function loadMedicine() {
+      if (id) {
+        const med = await getMedicineById(id);
+        if (med) {
+          setMedicine(med);
+        } else {
+          navigate("/");
+        }
       }
     }
+    loadMedicine();
   }, [id, navigate]);
 
   if (!medicine) {

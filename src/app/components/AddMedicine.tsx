@@ -69,7 +69,7 @@ export function AddMedicine() {
     return base;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!formData.name || !formData.dosage || !formData.type) {
@@ -83,9 +83,13 @@ export function AddMedicine() {
       createdAt: new Date(),
     };
 
-    saveMedicine(medicine);
-    toast.success("Remédio adicionado com sucesso!");
-    navigate("/");
+    try {
+      await saveMedicine(medicine);
+      toast.success("Remédio adicionado com sucesso!");
+      navigate("/");
+    } catch (error) {
+      toast.error("Erro ao salvar o remédio.");
+    }
   }
 
   return (
