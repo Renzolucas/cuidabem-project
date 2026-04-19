@@ -2,7 +2,7 @@ CuidaBEM - Gestão de Medicamentos
 
 O CuidaBEM é uma aplicação Full Stack desenvolvida para auxiliar pessoas (com foco no público idoso) a gerenciarem seus horários de medicamentos. O projeto nasceu da necessidade real de garantir que o tratamento de saúde seja seguido à risca, evitando esquecimentos através de um sistema de alarmes inteligente.
 
-🛠 Tecnologias Utilizadas
+Tecnologias Utilizadas
 Front-end: React (Interface dinâmica e responsiva)
 
 Back-end: Java (Lógica de negócio e integração)
@@ -13,7 +13,7 @@ Design: Figma (Prototipagem de UI/UX focada em acessibilidade)
 
 Produtividade: Engenharia de prompt com IA para otimização de código.
 
-🌟 Diferenciais Técnicos
+Diferenciais Técnicos
 Autenticação Robusta: Integração com Supabase Auth para criação de contas e login seguro.
 
 Isolamento de Dados: Arquitetura de banco de dados onde cada usuário possui seu próprio conjunto de registros, garantindo privacidade total.
