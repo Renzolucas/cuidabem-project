@@ -16,8 +16,6 @@ import {
 import { saveMedicine } from "../utils/storage";
 import { Medicine } from "../types";
 import { toast } from "sonner";
-import { AIPhotoScan } from "./AIPhotoScan";
-import { MedicineAIResult } from "../utils/aiHelpers";
 
 const MEDICINE_TYPES = [
   "Comprimido",
@@ -40,34 +38,6 @@ export function AddMedicine() {
     description: "",
     sideEffects: "",
   });
-  const [aiFilledFields, setAiFilledFields] = useState<Set<string>>(new Set());
-
-  function handleAIResult(result: MedicineAIResult) {
-    const filled = new Set<string>();
-    setFormData((prev) => {
-      const updated = { ...prev };
-      if (result.name) { updated.name = result.name; filled.add("name"); }
-      if (result.dosage) { updated.dosage = result.dosage; filled.add("dosage"); }
-      if (result.type && MEDICINE_TYPES.includes(result.type)) {
-        updated.type = result.type;
-        filled.add("type");
-      }
-      if (result.manufacturer) { updated.manufacturer = result.manufacturer; filled.add("manufacturer"); }
-      if (result.description) { updated.description = result.description; filled.add("description"); }
-      if (result.sideEffects) { updated.sideEffects = result.sideEffects; filled.add("sideEffects"); }
-      return updated;
-    });
-    setAiFilledFields(filled);
-    // Clear highlights after 4 seconds
-    setTimeout(() => setAiFilledFields(new Set()), 4000);
-  }
-
-  function getFieldClass(field: string, base: string) {
-    if (aiFilledFields.has(field)) {
-      return `${base} ring-2 ring-green-400 dark:ring-green-500 border-green-400 dark:border-green-500`;
-    }
-    return base;
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -117,26 +87,6 @@ export function AddMedicine() {
         </div>
       </div>
 
-      {/* AI Scan Card */}
-      <Card className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
-        <div className="flex items-start gap-3 mb-3">
-          <div className="flex-1">
-            <p className="text-sm text-green-800 dark:text-green-300 font-medium">
-              ✨ Preencher automaticamente com IA
-            </p>
-            <p className="text-xs text-green-700 dark:text-green-400 mt-0.5">
-              Fotografe a embalagem e a IA preencherá o formulário para você
-            </p>
-          </div>
-        </div>
-        <AIPhotoScan onResult={handleAIResult} />
-        {aiFilledFields.size > 0 && (
-          <p className="text-xs text-green-700 dark:text-green-400 mt-2 text-center">
-            ✅ {aiFilledFields.size} {aiFilledFields.size === 1 ? "campo preenchido" : "campos preenchidos"} pela IA — campos destacados em verde
-          </p>
-        )}
-      </Card>
-
       {/* Form */}
       <Card className="p-6 bg-white dark:bg-gray-800 border-green-100 dark:border-gray-700">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -153,7 +103,7 @@ export function AddMedicine() {
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className={getFieldClass("name", "bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 transition-all")}
+              className="bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 transition-all"
               required
             />
           </div>
@@ -172,7 +122,7 @@ export function AddMedicine() {
                 onChange={(e) =>
                   setFormData({ ...formData, dosage: e.target.value })
                 }
-                className={getFieldClass("dosage", "bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 transition-all")}
+                className="bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 transition-all"
                 required
               />
             </div>
@@ -188,7 +138,7 @@ export function AddMedicine() {
                 }
                 required
               >
-                <SelectTrigger className={getFieldClass("type", "bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 dark:text-gray-100 transition-all")}>
+                <SelectTrigger className="bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 dark:text-gray-100 transition-all">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
@@ -211,7 +161,7 @@ export function AddMedicine() {
               onChange={(e) =>
                 setFormData({ ...formData, manufacturer: e.target.value })
               }
-              className={getFieldClass("manufacturer", "bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 transition-all")}
+              className="bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 transition-all"
             />
           </div>
 
@@ -225,7 +175,7 @@ export function AddMedicine() {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className={getFieldClass("description", "bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 min-h-20 transition-all")}
+              className="bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 min-h-20 transition-all"
             />
           </div>
 
@@ -239,7 +189,7 @@ export function AddMedicine() {
               onChange={(e) =>
                 setFormData({ ...formData, sideEffects: e.target.value })
               }
-              className={getFieldClass("sideEffects", "bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 min-h-20 transition-all")}
+              className="bg-white dark:bg-gray-700 border-green-200 dark:border-gray-600 focus:border-green-400 dark:focus:border-green-500 dark:text-gray-100 dark:placeholder-gray-500 min-h-20 transition-all"
             />
           </div>
 

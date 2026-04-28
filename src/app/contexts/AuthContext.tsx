@@ -6,7 +6,7 @@ import {
   ReactNode,
 } from "react";
 import { createClient, SupabaseClient, Session, User } from "@supabase/supabase-js";
-import { projectId, publicAnonKey } from "/utils/supabase/info";
+import { projectId, publicAnonKey } from "../../../utils/supabase/info";
 
 const supabaseUrl = `https://${projectId}.supabase.co`;
 
@@ -19,7 +19,8 @@ export function getSupabase(): SupabaseClient {
   return _supabase;
 }
 
-export const serverUrl = `${supabaseUrl}/functions/v1/make-server-0d9b2cf8`;
+export { publicAnonKey };
+export const serverUrl = `${supabaseUrl}/functions/v1/server/make-server-0d9b2cf8`;
 
 interface AuthContextType {
   user: User | null;
@@ -78,12 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error.message };
       }
 
-      // Supabase might require email confirmation depending on project settings.
-      // If the user is returned and there's no session, it might mean confirmation is needed.
       if (data.user && !data.session) {
-        // However, usually for simple prototypes we want immediate login.
-        // If the project has "Confirm Email" disabled, data.session will be present.
-        // If it's enabled, we'll try to sign in anyway to see if it works.
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) {
           if (signInError.message.includes("Email not confirmed")) {

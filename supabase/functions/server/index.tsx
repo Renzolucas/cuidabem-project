@@ -5,18 +5,33 @@ import { createClient } from "npm:@supabase/supabase-js";
 
 const app = new Hono();
 
-app.use('*', logger(console.log));
-
+// Enhanced CORS middleware
 app.use(
-  "/*",
+  "*",
   cors({
-    origin: "*",
-    allowHeaders: ["Content-Type", "Authorization"],
+    origin: (origin) => origin || "*",
+    allowHeaders: ["Content-Type", "Authorization", "x-client-info", "apikey"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
   }),
 );
+
+app.use("*", async (c, next) => {
+  console.log(`Incoming request: ${c.req.method} ${c.req.url}`);
+  await next();
+});
+
+// Explicit OPTIONS handler
+app.options("*", (c) => {
+  return c.text("", 204);
+});
+
+// Error handling
+app.onError((err, c) => {
+  console.error("Hono error:", err);
+  return c.json({ error: "Internal Server Error", message: err.message }, 500);
+});
 
 // Health check
 app.get("/make-server-0d9b2cf8/health", (c) => {
@@ -149,4 +164,27 @@ Exemplo de resposta:
   }
 });
 
-Deno.serve(app.fetch);
+export const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE",
+};
+
+Deno.serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }
+
+  try {
+    return await app.fetch(req);
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
